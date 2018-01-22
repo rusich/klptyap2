@@ -22,15 +22,24 @@ namespace lab2
             try
             {
                 file_content = File.ReadAllText(input_file);
-                //Regex r = new Regex(@"(?<three>(?<one>\d)+)+");
-                //Match m = r.Match("123 456");
                 Regex r = new Regex(
-                    @"\s*class\s+"+
-                    @"(?<name>[a-zA-Z_]\w*)\s*<\s*"+
-                    //@"(?'p'<\s*(?<param>[a-zA-Z_]\w*))+\s*"+
-                    @"(?<param>[a-zA-Z_]\w*)+(\s*,\s*(?<param>[a-zA-Z_]\w*))*" +
-                    //@"\s*(?'-p'>\s*)+\s*"+
-                    @"\s*>\s*(?(p)(?!))$");
+                @"\s*class\s+                 
+                (?<name>[a-zA-Z_]\w*)\s*<\s*
+                (?=                    
+                    (?>                
+                    (?<param>[a-zA-Z_]\w*)+\s*         
+                    (
+                    (\s*,\s*(?<param>[a-zA-Z_]\w*))+\s*       
+                    |                 
+                    \s*<\s*(?<param>[a-zA-Z_]\w*)+\s*  (?<DEPTH>)  
+                    | 
+                    \s*>\s* (?<-DEPTH>)
+                    )*
+                    )*                 
+                    (?(DEPTH)(?!))     
+                    \s*>\s*$                  
+                )",
+    RegexOptions.IgnorePatternWhitespace);
                 Match m = r.Match(file_content);
                 int matchCount = 0;
                 while (m.Success)
@@ -52,12 +61,20 @@ namespace lab2
                 }
 
                 m = r.Match(file_content);
-                if (m.Success) 
+                if (m.Success)
                 {
-                    Console.WriteLine(m.Groups["name"].Value);
+                    string classname = m.Groups["name"].Value;
+                    Console.WriteLine(classname);
                     foreach (var param in m.Groups["param"].Captures)
+                    {
                         Console.WriteLine(param);
-
+                        if(classname==param.ToString())
+                        {
+                            Console.WriteLine("Ошибка. Параметр не моежт иметь такое же имя как у класса {0}", param.ToString());
+                            Console.ReadKey();
+                            Environment.Exit(-1);
+                        }
+                    }
                     Console.WriteLine("end");
                 }
                 else Console.WriteLine("Ошибка синтаксиса");
